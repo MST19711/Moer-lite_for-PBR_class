@@ -27,22 +27,23 @@ AreaLight::AreaLight(const Json &json) : Light(json) {
         power = SpectrumRGB(energy * (this->shape->getArea() * PI));
         power.debugPrint();
     }
-
     rank = fetchOptional<float>(json, "rank", 0.0f);
+    std::cerr << "RANK : " << rank << "\n";
     if (rank != 0.0f)
         useRank = true;
     if (useRank) {
         float sum = 0;
-        auto sampler = Factory::construct_class<Sampler>(json["sampler"]);
+        auto sampler = Factory::construct_class<Sampler>(
+            {{"type", "independent"}, {"xSamples", 4}, {"ySamples", 4}});
         for (int i = 0; i < MonteCarloTimes; i++) {
-            float theta = sampler->next1D() * PI;
-            sum += pow(cos(theta), rank + 1);
+            float theta = (sampler->next1D() * PI) / 2;
+            sum += pow(cos(theta), rank);
         }
         energyRatio = (this->shape->getArea() * MonteCarloTimes) / sum;
-        // (sum / (s * MCtimes)) * k = power
-        // k_r = power_r * (s * MCtimes) / sum
-        // k_g = power_g * (s * MCtimes) / sum
-        // k_b = power_b * (s * MCtimes) / sum
+        // (sum / (S * MCtimes)) * k = power
+        // k_r = power_r * (S * MCtimes) / sum
+        // k_g = power_g * (S * MCtimes) / sum
+        // k_b = power_b * (S * MCtimes) / sum
     }
 }
 
@@ -52,9 +53,9 @@ Spectrum AreaLight::evaluateEmission(const Intersection &intersection,
         return energy;
     } else {
         return energyRatio *
-               pow(dot(normalize(intersection.normal), normalize(wo)),
-                   rank + 1) *
-               power;
+               pow(abs(dot(normalize(intersection.normal), normalize(wo))),
+                   rank) *
+               energy;
     }
 }
 
@@ -65,8 +66,17 @@ LightSampleResult AreaLight::sample(const Intersection &shadingPoint,
     shape->uniformSampleOnSurface(sample, &sampleResult, &pdf);
     Vector3f shadingPoint2sample =
         sampleResult.position - shadingPoint.position;
-
-    return {energy,
+    Spectrum retRadiance;
+    if (!useRank) {
+        retRadiance = energy;
+    } else {
+        retRadiance = energyRatio *
+                      pow(abs(dot(normalize(shadingPoint.normal),
+                                  normalize(shadingPoint2sample))),
+                          rank) *
+                      energy;
+    }
+    return {retRadiance,
             normalize(shadingPoint2sample),
             shadingPoint2sample.length() - EPSILON,
             sampleResult.normal,

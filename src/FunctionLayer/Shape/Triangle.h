@@ -65,10 +65,7 @@ class TriangleMesh : public Shape {
         float choise = sample[0] * totalArea;
         while (l < r) {
             mid = (l + r) / 2;
-            // std::cerr << facesS[mid].left << " -- " << facesS[mid].right
-            //           << " : " << choise << std::endl;
             if (facesS[mid].left <= choise && choise <= facesS[mid].right) {
-                // std::cerr << mid << std::endl;
                 sampleInTriangle(sample, intersection, facesS[mid]);
                 return;
             } else if (facesS[mid].left > choise) {
@@ -77,7 +74,6 @@ class TriangleMesh : public Shape {
                 l = mid + 1;
             }
         }
-        // std::cerr << l << std::endl;
         sampleInTriangle(sample, intersection, facesS[l]);
         return;
     }
