@@ -25,7 +25,7 @@ add_subdirectory(./externals)
 
 add_executable(Moer
   src/main.cpp
-
+  src/FunctionLayer/Texture/WoodTexture.cpp
   src/CoreLayer/Math/Transform.cpp
 
   src/FunctionLayer/Acceleration/AABB.cpp

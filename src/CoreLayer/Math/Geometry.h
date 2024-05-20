@@ -162,6 +162,8 @@ struct Point3f {
         fflush(stdout);
     }
 
+    Vector3f v3f() const { return xyz; }
+
     //* 友函数/类声明
   public:
     friend class Vector3f;

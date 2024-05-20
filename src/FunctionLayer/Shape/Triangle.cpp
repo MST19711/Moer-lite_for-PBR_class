@@ -1,4 +1,5 @@
 #include "Triangle.h"
+#include "CoreLayer/Math/Geometry.h"
 #include <FunctionLayer/Acceleration/Linear.h>
 //--- Triangle ---
 Triangle::Triangle(int _primID, int _vtx0Idx, int _vtx1Idx, int _vtx2Idx,
@@ -142,16 +143,43 @@ void TriangleMesh::fillIntersection(float distance, int primID, float u,
     }
 
     //* 计算纹理坐标
+    Vector2f tw, tu, tv;
     if (meshData->texcodBuffer.size() != 0) {
-        Vector2f tw = meshData->texcodBuffer[faceInfo[0].texcodIndex],
-                 tu = meshData->texcodBuffer[faceInfo[1].texcodIndex],
-                 tv = meshData->texcodBuffer[faceInfo[2].texcodIndex];
+        tw = meshData->texcodBuffer[faceInfo[0].texcodIndex];
+        tu = meshData->texcodBuffer[faceInfo[1].texcodIndex];
+        tv = meshData->texcodBuffer[faceInfo[2].texcodIndex];
         intersection->texCoord = w * tw + u * tu + v * tv;
     } else {
         intersection->texCoord = Vector2f{.0f, .0f};
     }
 
     // TODO 计算交点的切线和副切线
+
+    // 计算偏微分dpdu和dpdv
+    auto solveLinearSystem2x2 = [](const Vector2f A0, const Vector2f A1,
+                                   const Vector2f B, float &x0, float &x1) {
+        float det = A0[0] * A1[1] - A0[1] * A1[0];
+        if (std::abs(det) < 1e-10f)
+            return false;
+        x0 = (A1[1] * B[0] - A0[1] * B[1]) / det;
+        x1 = (A0[0] * B[1] - A1[0] * B[0]) / det;
+        if (std::isnan(x0) || std::isnan(x1))
+            return false;
+        return true;
+    };
+
+    float dUdu, dVdu;
+    solveLinearSystem2x2((tw - tu), (tw - tv), Vector2f(1, 0), dUdu, dVdu);
+    intersection->dpdu =
+        dUdu * (pu.v3f() - pw.v3f()) + dVdu * (pv.v3f() - pw.v3f());
+    // std::cout << succ << std::endl;
+    //  std::cout << dUdu << " : " << dVdu << std::endl;
+
+    float dUdv, dVdv;
+    solveLinearSystem2x2((tw - tu), (tw - tv), Vector2f(0, 1), dUdv, dVdv);
+    intersection->dpdv =
+        dUdv * (pu.v3f() - pw.v3f()) + dVdv * (pv.v3f() - pw.v3f());
+
     Vector3f tangent{1.f, 0.f, .0f};
     Vector3f bitangent;
     if (std::abs(dot(tangent, intersection->normal)) > .9f) {
