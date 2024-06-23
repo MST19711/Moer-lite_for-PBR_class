@@ -117,7 +117,7 @@ struct Point3f {
     //* 构造函数
     Point3f(float f = .0f) { xyz = vecmat::vec3f::fill(f); }
     Point3f(float _x, float _y, float _z) : xyz(_x, _y, _z) {}
-
+    Point3f(Vector3f X) : xyz(X.xyz) {}
     //* 与向量相加
     Point3f operator+(const Vector3f &rhs) const {
         return Point3f(xyz + rhs.xyz);

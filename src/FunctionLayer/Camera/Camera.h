@@ -4,6 +4,7 @@
 #include <FunctionLayer/Ray/Ray.h>
 #include <ResourceLayer/Factory.h>
 #include <ResourceLayer/JsonUtil.h>
+#include <vector>
 
 struct CameraSample {
     Vector2f xy;

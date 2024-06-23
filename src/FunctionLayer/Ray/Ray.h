@@ -21,9 +21,9 @@ struct Ray {
     Point3f origin;
     Vector3f direction;
     float tFar, tNear, time;
-
+    float wavelength;
     //* 光线微分
-    bool hasDifferentials = true;
+    bool hasDifferentials = false;
     Point3f originX, originY;
     Vector3f directionX, directionY;
 };

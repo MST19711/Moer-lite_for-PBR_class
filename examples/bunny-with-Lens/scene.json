@@ -1,0 +1,83 @@
+{
+  "output" : {
+    "filename" : "bunny-withLens.hdr"
+  },
+  "sampler" : {
+    "type" : "independent",
+    "xSamples" : 10,
+    "ySamples" : 10
+  },
+  "camera" : {
+    "type" : "opticalSystem",
+    "transform" : {
+      "position" : [0, 4, 16],
+      "up" : [0, 1, 0],
+      "lookAt" : [0, 0, 0]
+    },
+    "tNear" : 0.1,
+    "tFar" : 10000,
+    "verticalFov" : 45,
+    "timeStart" : 0,
+    "timeEnd" : 0,
+    "film" : {
+      "size" : [600, 400],
+      "diagonal" : 0.0301
+    },
+    "sampler" : {
+      "type" : "independent",
+      "xSamples" : 10,
+      "ySamples" : 10
+    },
+    "focusPoint"  : [0, 0, 0],
+    "lens" : [{"type" : "sphereSurface", 
+                "radius" : 50, 
+                "thick" : 7.52, 
+                "nd" : 1.670, 
+                "V_no" : 47.1, 
+                "ap" : 50.4},
+                {"type" : "sphereSurface", 
+                "radius" : -50, 
+                "thick" : 0.240, 
+                "nd" : 1.00029312, 
+                "V_no" : 89.30, 
+                "ap" : 50.4}
+              ]
+  },
+  "integrator" : {
+    "type" : "directSampleLight"
+  },
+  "scene" : {
+    "shapes" : [
+      {
+        "type" : "triangle",
+        "file" : "models/bunny.obj",
+        "material" : {
+          "type" : "matte",
+          "albedo" : [0.8, 0.8, 0.8]
+        },
+        "transform" : {
+          "translate" : [0, 0, 0]
+        }
+      },
+      {
+        "type" : "parallelogram",
+        "base" : [-10, 0, -10],
+        "edge0" : [0, 0, 20],
+        "edge1" : [20,0,0],
+        "material" : {
+          "type" : "matte",
+          "albedo" : [0.7, 0.7, 0.7]
+        }
+      }   
+    ],
+    "lights" : [
+      {
+        "type" : "environmentLight",
+        "texture" : {
+          "type" : "imageTex",
+          "file" : "images/indoor.hdr"
+        }
+      }
+    ]
+  }
+}
