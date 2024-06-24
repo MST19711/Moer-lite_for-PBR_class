@@ -49,3 +49,6 @@ PerspectiveCamera::PerspectiveCamera(const Json &json) : Camera(json) {
 
     transform = Transform(translation, rotation, Matrix4f::identity());
 }
+void Camera::autoFocus(const Scene &scene) {
+    std::cout << "base auto Focus...\n";
+}

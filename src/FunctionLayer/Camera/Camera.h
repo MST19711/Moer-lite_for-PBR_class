@@ -1,4 +1,5 @@
 #pragma once
+#include "../src/FunctionLayer/Scene/Scene.h"
 #include <CoreLayer/Math/Transform.h>
 #include <FunctionLayer/Film/Film.h>
 #include <FunctionLayer/Ray/Ray.h>
@@ -32,6 +33,7 @@ class Camera : public Transformable {
                                        Vector2f NDC) const = 0;
 
     std::shared_ptr<Film> film = nullptr;
+    virtual void autoFocus(const Scene &scene);
 
   protected:
     //* 可视最近距离、最远距离、快门开启时间和结束时间

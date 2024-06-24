@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../src/FunctionLayer/Scene/Scene.h"
 #include "Camera.h"
 #include "CoreLayer/Math/Geometry.h"
 #include <FunctionLayer/Sampler/Sampler.h>
@@ -8,23 +9,19 @@
 
 #define AIR_ND 1.00029312
 #define AIR_V_NO 89.30
-
+enum class focusMode { Center, Point };
 //* outside指镜片表面左侧（即远离底片的方向）空间
 class lensSurface {
   public:
     // lensSurface() = delete;
-    virtual float gatHitTime(const Ray *ray) const = 0;
+
+    //* 如果不能相交，请返回INF
+    virtual float getHitTime(const Ray &ray) const = 0;
     virtual Vector3f getNormAt(Vector3f hitPoint) const = 0;
-    virtual Ray getRefractRay(const Ray &rayIn, float outsideNd,
-                              float outsideV_no) const = 0;
-    virtual Ray getReflectRay(const Ray &rayIn, float outsideNd,
-                              float outsideV_no) const = 0;
-    virtual float getReflectRatio(const Ray &rayIn, float outsideNd,
-                                  float outsideV_no) const = 0;
     virtual Vector3f sampleOnSurface(Vector2f sample) const = 0;
     virtual float getNd() const = 0;
     virtual float getV_no() const = 0;
-    virtual float getV_ap() const = 0;
+    virtual float get_ap() const = 0;
 };
 
 class sphereLensSurface : public lensSurface {
@@ -32,18 +29,12 @@ class sphereLensSurface : public lensSurface {
     sphereLensSurface(const Json &json);
     sphereLensSurface(float radius, float thick, float nd, float V_no, float ap,
                       float dis2Film);
-    virtual float gatHitTime(const Ray *ray) const = 0;
-    virtual Vector3f getNormAt(Vector3f hitPoint) const = 0;
-    virtual Ray getRefractRay(const Ray &rayIn, float outsideNd,
-                              float outsideV_no) const override;
-    virtual Ray getReflectRay(const Ray &rayIn, float outsideNd,
-                              float outsideV_no) const override;
-    virtual float getReflectRatio(const Ray &rayIn, float outsideNd,
-                                  float outsideV_no) const override;
+    virtual float getHitTime(const Ray &ray) const override;
+    virtual Vector3f getNormAt(Vector3f hitPoint) const override;
     virtual Vector3f sampleOnSurface(Vector2f sample) const override;
     float getNd() const override;
     float getV_no() const override;
-    virtual float getV_ap() const override;
+    virtual float get_ap() const override;
 
   private:
     //* thick参数为光轴上到右侧（即靠近底片）那片镜片的距离
@@ -55,18 +46,12 @@ class sphereLensSurface : public lensSurface {
 class aperture : public lensSurface {
   public:
     aperture(const Json &json);
-    virtual float gatHitTime(const Ray *ray) const = 0;
-    virtual Vector3f getNormAt(Vector3f hitPoint) const = 0;
-    virtual Ray getRefractRay(const Ray &rayIn, float outsideNd,
-                              float outsideV_no) const override;
-    virtual Ray getReflectRay(const Ray &rayIn, float outsideNd,
-                              float outsideV_no) const override;
-    virtual float getReflectRatio(const Ray &rayIn, float outsideNd,
-                                  float outsideV_no) const override;
+    virtual float getHitTime(const Ray &ray) const override;
+    virtual Vector3f getNormAt(Vector3f hitPoint) const override;
     virtual Vector3f sampleOnSurface(Vector2f sample) const override;
-    virtual float getV_ap() const override;
     float getNd() const override;
     float getV_no() const override;
+    virtual float get_ap() const override;
     float thick, ap, dis2film;
 };
 
@@ -89,6 +74,7 @@ class OpticalSystem : public Camera {
                                        Vector2f NDC) const override;
     //* 自动对焦目前只支持纯折射系统
     void autoFocus(Vector3f focusPoint);
+    void autoFocus(const Scene &scene) override;
 
   private:
     std::vector<std::shared_ptr<lensSurface>> lensSurfaceList;
@@ -100,4 +86,7 @@ class OpticalSystem : public Camera {
     float monitoring_range; // 单位为mm
     Vector3f focusPoint;
     float focusOffset;
+    int apertureId;
+    focusMode focusMode;
+    Ray getRayOut(const Ray &rayIn) const;
 };

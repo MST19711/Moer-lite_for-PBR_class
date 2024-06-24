@@ -60,13 +60,18 @@ int main(int argc, char **argv) {
     std::string sceneJsonPath = FileUtil::getFullPath("scene.json");
     std::ifstream fstm(sceneJsonPath);
     Json json = Json::parse(fstm);
-    auto camera = Factory::construct_class<Camera>(json["camera"]);
     auto scene = std::make_shared<Scene>(json["scene"]);
     auto integrator = Factory::construct_class<Integrator>(json["integrator"]);
     auto sampler = Factory::construct_class<Sampler>(json["sampler"]);
+    auto camera = Factory::construct_class<Camera>(json["camera"]);
     int spp = sampler->xSamples * sampler->ySamples;
     int width = camera->film->size[0], height = camera->film->size[1];
-
+    std::cout << fetchOptional(json["camera"], "type", std::string("Non"))
+              << "\n";
+    if (fetchOptional(json["camera"], "type", std::string(" ")) ==
+        std::string("opticalSystem")) {
+        camera->autoFocus(*scene);
+    }
     auto start = std::chrono::system_clock::now();
 
     for (int y = 0; y < height; ++y) {
