@@ -12,7 +12,7 @@ struct CameraSample {
     Vector2f lens;
     float time;
 };
-
+enum class sampleAt { film, lens0 };
 //* 所有相机的基类
 class Camera : public Transformable {
   public:
@@ -34,6 +34,7 @@ class Camera : public Transformable {
 
     std::shared_ptr<Film> film = nullptr;
     virtual void autoFocus(const Scene &scene);
+    sampleAt sampleAt;
 
   protected:
     //* 可视最近距离、最远距离、快门开启时间和结束时间

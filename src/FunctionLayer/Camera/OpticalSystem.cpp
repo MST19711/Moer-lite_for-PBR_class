@@ -303,7 +303,7 @@ Ray OpticalSystem::getRayOut(const Ray &rayIn) const {
                     getReflectRatio(normAtHitPoint, rayInLens.direction,
                                     nd_from, V_from, nd_to, V_to, wavelength)) {
                 nextDir = getReflectDir(normAtHitPoint, rayInLens.direction);
-                intensity *= 0.5;
+                intensity *= 0.25;
             } else {
                 nextDir = getRefractDri(rayInLens, normAtHitPoint, nd_from,
                                         V_from, nd_to, V_to);

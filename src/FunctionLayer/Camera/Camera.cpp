@@ -7,6 +7,7 @@ Camera::Camera(const Json &json) {
     timeStart = fetchOptional(json, "timeStart", .0f); // 如不提供默认为0
     timeEnd = fetchOptional(json, "timeEnd", .0f);     // 如不提供默认为0
     film = std::make_shared<Film>(json["film"]); // 根据相机的film域创建一个film
+    sampleAt = sampleAt::film;
 }
 
 //* 根据json对象初始化透视相机的各个参数

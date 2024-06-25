@@ -71,29 +71,32 @@ int main(int argc, char **argv) {
         camera->autoFocus(*scene);
     }
     auto start = std::chrono::system_clock::now();
-
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            if (T_queue.size() >= T_NUM) {
-                T_queue.front().join();
-                T_queue.pop();
-            }
-            T_queue.push(std::move(std::thread(
-                parallelRendering, x, width, y, height, spp, std::ref(camera),
-                std::ref(sampler), std::ref(integrator), std::ref(scene))));
-            int finished = x + y * width;
-            if (finished % 5 == 0) {
-                printProgress((float)finished / (height * width));
+    if (camera->sampleAt == sampleAt::film) {
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                if (T_queue.size() >= T_NUM) {
+                    T_queue.front().join();
+                    T_queue.pop();
+                }
+                T_queue.push(std::move(
+                    std::thread(parallelRendering, x, width, y, height, spp,
+                                std::ref(camera), std::ref(sampler),
+                                std::ref(integrator), std::ref(scene))));
+                int finished = x + y * width;
+                if (finished % 5 == 0) {
+                    printProgress((float)finished / (height * width));
+                }
             }
         }
-    }
 
 #ifdef PARALLEL
-    while (!T_queue.empty()) {
-        T_queue.front().join();
-        T_queue.pop();
-    }
+        while (!T_queue.empty()) {
+            T_queue.front().join();
+            T_queue.pop();
+        }
 #endif
+    } else {
+    }
 
     printProgress(1.f);
 
