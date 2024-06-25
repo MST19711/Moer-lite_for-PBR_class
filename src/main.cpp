@@ -47,7 +47,7 @@ void parallelRendering(const int x, const int width, const int y,
     for (int i = 0; i < spp; ++i) {
         CameraSample samp = CameraSample{sampler->next2D()};
         Ray ray = camera->sampleRayDifferentials(samp, NDC);
-        li += integrator->li(ray, *scene, sampler);
+        li += ray.intensity * integrator->li(ray, *scene, sampler);
     }
     camera->film->deposit({x, y}, li / spp);
 }

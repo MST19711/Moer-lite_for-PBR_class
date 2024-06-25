@@ -214,7 +214,6 @@ OpticalSystem::OpticalSystem(const Json &json) : Camera(json) {
     }
 }
 
-#define MAX_TRACE_INLENS 50
 #define IS_ZERO_3f(x)                                                          \
     ((x[0] == 0 && x[1] == 0 && x[2] == 0) ||                                  \
      (std::isnan(x[0]) || std::isnan(x[1]) || std::isnan(x[2])))
@@ -222,8 +221,17 @@ OpticalSystem::OpticalSystem(const Json &json) : Camera(json) {
 #define VALID_FLOAT(x) (not std::isnan(x) and not std::isinf(x))
 
 float getReflectRatio(Vector3f norm, Vector3f rayDir, float nd_from,
-                      float V_from, float nd_to, float V_to) {
-    return -1;
+                      float V_from, float nd_to, float V_to, float wavelength) {
+    if (V_from == V_to and nd_from == nd_to)
+        return 0;
+    float n_from = getRefractIndex(nd_from, V_from, wavelength),
+          n_to = getRefractIndex(nd_to, V_to, wavelength);
+    float R_0 = std::pow(((n_from - n_to) / (n_from + n_to)), 2);
+    float R_theta =
+        R_0 +
+        (1 - R_0) *
+            std::pow((1 - abs(dot(normalize(norm), normalize(rayDir)))), 5);
+    return R_theta;
 }
 
 Vector3f getReflectDir(Vector3f norm, Vector3f rayDir) {
@@ -231,13 +239,15 @@ Vector3f getReflectDir(Vector3f norm, Vector3f rayDir) {
     return rayDir - 2 * NN * dot(NN, rayDir);
 }
 
-const int MAX_TRACE_TIMES = 50;
+const int MAX_TRACE_TIMES = 20;
 
 Ray OpticalSystem::getRayOut(const Ray &rayIn) const {
     Ray rayInLens = rayIn;
+    rayInLens.intensity = 1;
     float T = INFINITY;
     int nextLens = -1, thisLens = -1;
     int TRACE_TIMES = 0;
+    float wavelength = rayIn.wavelength;
     while (TRACE_TIMES < MAX_TRACE_TIMES) {
         TRACE_TIMES++;
         bool hasHitted = 0;
@@ -287,17 +297,20 @@ Ray OpticalSystem::getRayOut(const Ray &rayIn) const {
             Vector3f normAtHitPoint =
                 normalize(this->lensSurfaceList[nextLens]->getNormAt(hitPoint));
             Vector3f nextDir;
-            if (this->sampler->next1D() <
-                getReflectRatio(normAtHitPoint, rayInLens.direction, nd_from,
-                                V_from, nd_to, V_to)) {
+            float intensity = rayInLens.intensity;
+            if (not _isFocusing and
+                this->sampler->next1D() <
+                    getReflectRatio(normAtHitPoint, rayInLens.direction,
+                                    nd_from, V_from, nd_to, V_to, wavelength)) {
                 nextDir = getReflectDir(normAtHitPoint, rayInLens.direction);
+                intensity *= 0.5;
             } else {
                 nextDir = getRefractDri(rayInLens, normAtHitPoint, nd_from,
                                         V_from, nd_to, V_to);
             }
-            float waveLength = rayInLens.wavelength;
             rayInLens = Ray(Point3f(hitPoint), nextDir);
-            rayInLens.wavelength = waveLength;
+            rayInLens.wavelength = wavelength;
+            rayInLens.intensity = intensity;
         }
         thisLens = nextLens;
     }
@@ -320,6 +333,7 @@ void OpticalSystem::autoFocus(const Scene &scene) {
     }
 }
 void OpticalSystem::autoFocus(Vector3f focusPoint) {
+    _isFocusing = true;
     float distance =
         dot(focusPoint - this->camPosition, normalize(this->camTo));
     std::cout << "focuc distance : " << distance << "\n";
@@ -351,6 +365,7 @@ void OpticalSystem::autoFocus(Vector3f focusPoint) {
     }
     this->focusOffset /= sampleTimes;
     std::cout << "focucOffset : " << this->focusOffset << "\n";
+    _isFocusing = false;
 }
 
 Ray OpticalSystem::sampleRay(const CameraSample &sample, Vector2f NDC) const {

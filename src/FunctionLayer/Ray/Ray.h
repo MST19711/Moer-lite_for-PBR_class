@@ -7,9 +7,9 @@ struct Ray {
     Ray(Point3f _origin, Vector3f _direction, float _tNear = 1e-4f,
         float _tFar = 1e10f, float _time = .0f)
         : origin(_origin), direction(normalize(_direction)), tNear(_tNear),
-          tFar(_tFar), time(_time) {}
+          tFar(_tFar), time(_time), intensity(1) {}
     Ray(Point3f _origin, Point3f _destination, float _time = .0f)
-        : origin(_origin), tNear(1e-4f), time(_time) {
+        : origin(_origin), tNear(1e-4f), time(_time), intensity(1) {
         Vector3f o2d = _destination - _origin;
         tFar = o2d.length() - 1e-4f;
         direction = normalize(o2d);
@@ -27,4 +27,5 @@ struct Ray {
     Vector3f directionX, directionY;
     //* 物理相关
     float wavelength;
+    float intensity;
 };

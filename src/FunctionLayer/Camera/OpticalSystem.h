@@ -89,4 +89,5 @@ class OpticalSystem : public Camera {
     int apertureId;
     focusMode focusMode;
     Ray getRayOut(const Ray &rayIn) const;
+    bool _isFocusing;
 };
