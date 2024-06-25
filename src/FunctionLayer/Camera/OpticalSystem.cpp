@@ -10,6 +10,17 @@
 #include <memory>
 #include <optional>
 
+float getRefractIndex(float nd, float V_no, float wavelength) {
+    float n;
+    if (wavelength == 0) {
+        n = nd;
+    } else {
+        n = nd + ((nd - 1) / V_no) *
+                     ((1 / (wavelength * wavelength)) - (1 / (589.3 * 589.3)));
+    }
+    return n;
+}
+
 aperture::aperture(const Json &json) {
     this->thick = fetchOptional(json, "thick", 0.0) / 1000;
     this->ap = fetchOptional(json, "ap", 0.0) / 1000;
@@ -68,17 +79,8 @@ float aperture::getV_no() const { return AIR_V_NO; }
 Vector3f getRefractDri(const Ray &rayIn, Vector3f norm, float nd_from,
                        float V_from, float nd_to, float V_to) {
     float n_from, n_to;
-    if (rayIn.wavelength == 0) {
-        n_from = nd_from;
-        n_to = nd_to;
-    } else {
-        n_from = nd_from + ((nd_from - 1) / V_from) *
-                               ((1 / (rayIn.wavelength * rayIn.wavelength)) -
-                                (1 / (589.3 * 589.3)));
-        n_to = nd_to + ((nd_to - 1) / V_to) *
-                           ((1 / (rayIn.wavelength * rayIn.wavelength)) -
-                            (1 / (589.3 * 589.3)));
-    }
+    n_from = getRefractIndex(nd_from, V_from, rayIn.wavelength);
+    n_to = getRefractIndex(nd_to, V_to, rayIn.wavelength);
     Vector3f nNorm = normalize(norm);
     Vector3f directionIn = rayIn.direction;
     if (dot(nNorm, directionIn) < 0)
@@ -225,8 +227,8 @@ float getReflectRatio(Vector3f norm, Vector3f rayDir, float nd_from,
 }
 
 Vector3f getReflectDir(Vector3f norm, Vector3f rayDir) {
-    Vector3f NN = dot(norm, rayDir) > 0 ? -normalize(norm) : normalize(norm);
-    return rayDir + NN * dot(NN, rayDir);
+    Vector3f NN = normalize(norm);
+    return rayDir - 2 * NN * dot(NN, rayDir);
 }
 
 const int MAX_TRACE_TIMES = 50;
